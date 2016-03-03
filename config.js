@@ -30,5 +30,10 @@ var config = {
       destination : "", // Destination of your trip. Human readable address.
       name : "work", // Name of your destination ex: "work"
       reload_interval : 5 // Number of minutes the information is refreshed
+    },
+    autoTimer: {
+        enabled: false,
+        autosleep: 2400000, // How long the screen will stay awake before going to sleep (40 Mins)
+        autowake: '07:00:00' // When to automatically wake the screen up (7:00AM)
     }
 }

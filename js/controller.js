@@ -11,7 +11,7 @@
             XKCDService,
             GiphyService,
             TrafficService,
-            $scope, $timeout, $interval) {
+            $scope, $timeout, $interval, $filter) {
         var _this = this;
         var DEFAULT_COMMAND_TEXT = 'Say "What can I say?" to see a list of commands...';
         $scope.listening = false;
@@ -20,9 +20,34 @@
         $scope.user = {};
         $scope.interimResult = DEFAULT_COMMAND_TEXT;
 
+        var autoSleepTimer;
+
+        $scope.startAutoSleepTimer = function() {
+            $scope.stopAutoSleepTimer();
+            autoSleepTimer = $interval($scope.sleepInterval, config.autoTimer.autosleep);
+            console.debug('Starting autosleep timer', config.autoTimer.autosleep);
+        }
+
+        $scope.sleepInterval = function() {
+            console.debug('Auto-sleep.')
+            $scope.focus = "sleep";
+        }
+
+        $scope.stopAutoSleepTimer = function() {
+            console.debug('Stopping autosleep timer');
+            $interval.cancel(autoSleepTimer);
+        }
+
         //Update the time
         function updateTime(){
             $scope.date = new Date();
+
+            if (config.autoTimer.enabled === true && config.autoTimer.autowake == $filter('date')($scope.date, 'HH:mm:ss'))
+            {
+                console.debug('Auto-wake', config.autoTimer.autowake)
+                $scope.focus = "default";
+                $scope.startAutoSleepTimer();
+            }
         }
 
         // Reset the command text
@@ -31,6 +56,11 @@
         }
 
         _this.init = function() {
+            if (config.autoTimer.enabled)
+            {
+                $scope.startAutoSleepTimer();
+            }
+
             var tick = $interval(updateTime, 1000);
             updateTime();
             GeolocationService.getLocation({enableHighAccuracy: true}).then(function(geoposition){
