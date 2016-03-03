@@ -234,12 +234,15 @@
             //Track when the Annyang is listening to us
             AnnyangService.start(function(listening){
                 $scope.listening = listening;
+                $scope.startAutoSleepTimer();
             }, function(interimResult){
                 $scope.interimResult = interimResult;
                 $timeout.cancel(resetCommandTimeout);
+                $scope.startAutoSleepTimer();
             }, function(result){
                 $scope.interimResult = result[0];
                 resetCommandTimeout = $timeout(restCommand, 5000);
+                $scope.startAutoSleepTimer();
             });
         };
 
