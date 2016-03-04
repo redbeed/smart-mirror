@@ -30,7 +30,10 @@
 
         $scope.sleepInterval = function() {
             console.debug('Auto-sleep.')
+            // Sleep the screen
             $scope.focus = "sleep";
+            // Sleep the HDMI output
+            exec("/opt/vc/bin/tvservice -o", puts);
         }
 
         $scope.stopAutoSleepTimer = function() {
@@ -45,7 +48,10 @@
             if (config.autoTimer.enabled === true && config.autoTimer.autowake == $filter('date')($scope.date, 'HH:mm:ss'))
             {
                 console.debug('Auto-wake', config.autoTimer.autowake)
+                // Wake the screen
                 $scope.focus = "default";
+                // Wake the HDMI output
+                exec("/opt/vc/bin/tvservice -p", puts);
                 $scope.startAutoSleepTimer();
             }
         }
@@ -136,6 +142,18 @@
 
             // Go back to default view
             AnnyangService.addCommand('Wake up', defaultView);
+
+            // Turn off HDMI output
+            AnnyangService.addCommand('Screen off', function() {
+                console.debug('turning screen off');
+                exec("/opt/vc/bin/tvservice -o", puts);
+            });
+
+            // Turn on HDMI output
+            AnnyangService.addCommand('Screen on', function() {
+                console.debug('turning screen on');
+                exec("/opt/vc/bin/tvservice -p", puts);
+            })
 
             // Hide everything and "sleep"
             AnnyangService.addCommand('Show debug information', function() {
