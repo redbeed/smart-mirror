@@ -11,7 +11,7 @@
             ComicService,
             GiphyService,
             TrafficService,
-            $scope, $timeout, $interval, tmhDynamicLocale) {
+            $scope, $timeout, $interval, $filter, tmhDynamicLocale) {
         var _this = this;
         var DEFAULT_COMMAND_TEXT = 'Say "What can I say?" to see a list of commands...';
         $scope.listening = false;
@@ -29,9 +29,41 @@
 
         $scope.dateFormat = config.dateFormat;
         $scope.calcDateFormat = config.calendar.dateFormat;
+
+        var autoSleepTimer;
+
+        $scope.startAutoSleepTimer = function() {
+            $scope.stopAutoSleepTimer();
+            autoSleepTimer = $interval($scope.sleepInterval, config.autoTimer.autosleep);
+            console.debug('Starting autosleep timer', config.autoTimer.autosleep);
+        }
+
+        $scope.sleepInterval = function() {
+            console.debug('Auto-sleep.')
+            // Sleep the screen
+            $scope.focus = "sleep";
+            // Sleep the HDMI output
+            exec("/opt/vc/bin/tvservice -o", puts);
+        }
+
+        $scope.stopAutoSleepTimer = function() {
+            console.debug('Stopping autosleep timer');
+            $interval.cancel(autoSleepTimer);
+        }
+
         //Update the time
         function updateTime(){
             $scope.date = new Date();
+
+            if (config.autoTimer.enabled === true && config.autoTimer.autowake == $filter('date')($scope.date, 'HH:mm:ss'))
+            {
+                console.debug('Auto-wake', config.autoTimer.autowake)
+                // Wake the screen
+                $scope.focus = "default";
+                // Wake the HDMI output
+                exec("/opt/vc/bin/tvservice -p", puts);
+                $scope.startAutoSleepTimer();
+            }
         }
 
         // Reset the command text
@@ -40,6 +72,11 @@
         }
 
         _this.init = function() {
+            if (config.autoTimer.enabled)
+            {
+                $scope.startAutoSleepTimer();
+            }
+
             var tick = $interval(updateTime, 1000);
             updateTime();
             GeolocationService.getLocation({enableHighAccuracy: true}).then(function(geoposition){
@@ -166,6 +203,18 @@
                 defaultView();
             });
 
+            // Turn off HDMI output
+            AnnyangService.addCommand('Screen off', function() {
+                console.debug('turning screen off');
+                exec("/opt/vc/bin/tvservice -o", puts);
+            });
+
+            // Turn on HDMI output
+            AnnyangService.addCommand('Screen on', function() {
+                console.debug('turning screen on');
+                exec("/opt/vc/bin/tvservice -p", puts);
+            })
+
             // Hide everything and "sleep"
             AnnyangService.addCommand('Show debug information', function() {
                 console.debug("Boop Boop. Showing debug info...");
@@ -276,12 +325,15 @@
             //Track when the Annyang is listening to us
             AnnyangService.start(function(listening){
                 $scope.listening = listening;
+                $scope.startAutoSleepTimer();
             }, function(interimResult){
                 $scope.interimResult = interimResult;
                 $timeout.cancel(resetCommandTimeout);
+                $scope.startAutoSleepTimer();
             }, function(result){
                 $scope.interimResult = result[0];
                 resetCommandTimeout = $timeout(restCommand, 5000);
+                $scope.startAutoSleepTimer();
             });
         };
 
