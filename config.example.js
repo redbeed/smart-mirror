@@ -62,5 +62,22 @@ var config = {
         enabled: false,
         autosleep: 2400000, // How long the screen will stay awake before going to sleep (40 Mins)
         autowake: '07:00:00' // When to automatically wake the screen up (7:00AM)
+    },
+    rss: {
+        refreshTime: 60000, //one minute
+        feeds: [
+            {
+                url: "http://9to5mac.com/feed/",
+                name: "9to5mac",
+            },
+            {
+                url: "http://9to5toys.com/feed/",
+                name: "9to5toys",
+            },
+            {
+                url: "http://9to5google.com/feed/",
+                name: "9to5google",
+            },
+        ]
     }
 }
